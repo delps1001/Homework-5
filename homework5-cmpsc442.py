@@ -2,64 +2,90 @@
 # CMPSC442: Homework 5
 ############################################################
 
-student_name = "Type your full name here."
+student_name = "Dalton DelPiano"
 
 ############################################################
 # Imports
 ############################################################
 
-# Include your imports here, if any are used.
-
-
 
 ############################################################
 # Section 1: Propositional Logic
 ############################################################
-
 class Expr(object):
     def __hash__(self):
         return hash((type(self).__name__, self.hashable))
+
 
 class Atom(Expr):
     def __init__(self, name):
         self.name = name
         self.hashable = name
+
     def __eq__(self, other):
-        pass
+        if self.name == other.name:
+            return True
+        return False
+
     def __repr__(self):
-        pass
+        return "Atom(" + str(self.name) + ")"
+
     def atom_names(self):
-        pass
+        return set([self.name])
+
     def evaluate(self, assignment):
         pass
+
     def to_cnf(self):
         pass
+
 
 class Not(Expr):
     def __init__(self, arg):
         self.arg = arg
         self.hashable = arg
+
     def __eq__(self, other):
-        pass
+        if self.arg == other.arg:
+            return True
+        return False
+
     def __repr__(self):
-        pass
+        return "Not(" + repr(self.arg) + ")"
+
     def atom_names(self):
-        pass
+        return self.arg.atom_names()
+
     def evaluate(self, assignment):
         pass
     def to_cnf(self):
         pass
-        
+
+
 class And(Expr):
     def __init__(self, *conjuncts):
         self.conjuncts = frozenset(conjuncts)
         self.hashable = self.conjuncts
+
     def __eq__(self, other):
-        pass
+        if self.conjuncts == other.conjuncts:
+            return True
+        return False
+
     def __repr__(self):
-        pass
+        string = "And("
+        for x in self.hashable:
+            string += repr(x) + ", "
+        string = string[:-2]
+        string += ")"
+        return string
+
     def atom_names(self):
-        pass
+        atom_name = set()
+        for x in self.conjuncts:
+                atom_name = atom_name.union(x.atom_names())
+        return atom_name
+
     def evaluate(self, assignment):
         pass
     def to_cnf(self):
@@ -69,12 +95,26 @@ class Or(Expr):
     def __init__(self, *disjuncts):
         self.disjuncts = frozenset(disjuncts)
         self.hashable = self.disjuncts
+
     def __eq__(self, other):
-        pass
+        if self.disjuncts == other.disjuncts:
+            return True
+        return False
+
     def __repr__(self):
-        pass
+        string = "Or("
+        for x in self.hashable:
+            string += repr(x) + ", "
+        string = string[:-2]
+        string += ")"
+        return string
+
     def atom_names(self):
-        pass
+        atom_name = set()
+        for x in self.disjuncts:
+                atom_name = atom_name.union(x.atom_names())
+        return atom_name
+
     def evaluate(self, assignment):
         pass
     def to_cnf(self):
@@ -85,12 +125,18 @@ class Implies(Expr):
         self.left = left
         self.right = right
         self.hashable = (left, right)
+
     def __eq__(self, other):
-        pass
+        if self.hashable == other.hashable:
+            return True
+        return False
+
     def __repr__(self):
-        pass
+        return "Implies(" + repr(self.left) + ", " + repr(self.right) + ")"
+
     def atom_names(self):
-        pass
+        return self.left.atom_names().union(self.right.atom_names())
+
     def evaluate(self, assignment):
         pass
     def to_cnf(self):
@@ -101,12 +147,17 @@ class Iff(Expr):
         self.left = left
         self.right = right
         self.hashable = (left, right)
+
     def __eq__(self, other):
-        pass
+        if self.hashable[0] in other.hashable and self.hashable[1] in other.hashable:
+            return True
+        return False
+
     def __repr__(self):
-        pass
+        return "Iff(" + repr(self.left) + ", " + repr(self.right) + ")"
+
     def atom_names(self):
-        pass
+        return self.left.atom_names().union(self.right.atom_names())
     def evaluate(self, assignment):
         pass
     def to_cnf(self):
@@ -124,6 +175,12 @@ class KnowledgeBase(object):
         pass
     def ask(self, expr):
         pass
+
+
+a, b, c = map(Atom, "abc")
+print And(a, Implies(b, Iff(a, c))).atom_names()
+
+
 
 ############################################################
 # Section 2: Logic Puzzles
