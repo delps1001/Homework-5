@@ -37,7 +37,7 @@ class Atom(Expr):
         pass
 
     def to_cnf(self):
-        pass
+        return self
 
 
 class Not(Expr):
@@ -58,8 +58,24 @@ class Not(Expr):
 
     def evaluate(self, assignment):
         pass
+
     def to_cnf(self):
-        pass
+        temp_list = []
+        # First case ~(a v b) === ~a ^ ~b
+        cnf = self.arg.to_cnf()
+        if isinstance(cnf, Or):
+            for y in cnf.hashable:
+                temp_list.append(Not(y).to_cnf())
+            return And(*temp_list).to_cnf()
+        elif isinstance(cnf, And):
+            for y in cnf.hashable:
+                temp_list.append(Not(y).to_cnf())
+            return Or(*temp_list).to_cnf()
+        elif isinstance(cnf, Not):
+            return self.arg.arg
+        elif isinstance(cnf, Atom):
+            return self
+
 
 
 class And(Expr):
@@ -88,8 +104,20 @@ class And(Expr):
 
     def evaluate(self, assignment):
         pass
+
     def to_cnf(self):
-        pass
+        temp_list = []
+        return_list = []
+        for x in self.hashable:
+            temp_list.append(x.to_cnf())
+        for y in temp_list:
+            if isinstance(y, And):
+                for z in y.hashable:
+                    return_list.append(z)
+            else:
+                return_list.append(y)
+        return And(*return_list)
+
 
 class Or(Expr):
     def __init__(self, *disjuncts):
@@ -117,6 +145,7 @@ class Or(Expr):
 
     def evaluate(self, assignment):
         pass
+
     def to_cnf(self):
         pass
 
@@ -139,8 +168,9 @@ class Implies(Expr):
 
     def evaluate(self, assignment):
         pass
+
     def to_cnf(self):
-        pass
+        return Or(Not(self.left), self.right).to_cnf()
 
 class Iff(Expr):
     def __init__(self, left, right):
@@ -161,7 +191,7 @@ class Iff(Expr):
     def evaluate(self, assignment):
         pass
     def to_cnf(self):
-        pass
+            return And(Or(Not(self.left), self.right), Or(Not(self.right), self.left)).to_cnf()
 
 def satisfying_assignments(expr):
     pass
@@ -178,7 +208,7 @@ class KnowledgeBase(object):
 
 
 a, b, c = map(Atom, "abc")
-print And(a, Implies(b, Iff(a, c))).atom_names()
+print And(a, And(b, c)).to_cnf()
 
 
 
