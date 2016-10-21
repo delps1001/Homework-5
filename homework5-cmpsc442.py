@@ -72,9 +72,9 @@ class Not(Expr):
                 temp_list.append(Not(y).to_cnf())
             return Or(*temp_list).to_cnf()
         elif isinstance(cnf, Not):
-            return self.arg.arg
+            return cnf.arg
         elif isinstance(cnf, Atom):
-            return self
+            return Not(cnf)
 
 
 
@@ -149,6 +149,7 @@ class Or(Expr):
     def to_cnf(self):
         pass
 
+
 class Implies(Expr):
     def __init__(self, left, right):
         self.left = left
@@ -209,7 +210,6 @@ class KnowledgeBase(object):
 
 a, b, c = map(Atom, "abc")
 print And(a, And(b, c)).to_cnf()
-
 
 
 ############################################################
