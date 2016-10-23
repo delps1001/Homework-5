@@ -7,7 +7,7 @@ student_name = "Dalton DelPiano"
 ############################################################
 # Imports
 ############################################################
-
+import copy
 
 ############################################################
 # Section 1: Propositional Logic
@@ -34,7 +34,9 @@ class Atom(Expr):
         return set([self.name])
 
     def evaluate(self, assignment):
-        pass
+        if assignment[self.name] == True:
+            return True
+        return False
 
     def to_cnf(self):
         return self
@@ -57,7 +59,9 @@ class Not(Expr):
         return self.arg.atom_names()
 
     def evaluate(self, assignment):
-        pass
+        if self.arg.evaluate(assignment) == False:
+            return True
+        return False
 
     def to_cnf(self):
         temp_list = []
@@ -103,7 +107,11 @@ class And(Expr):
         return atom_name
 
     def evaluate(self, assignment):
-        pass
+        All_true= True
+        for x in self.hashable:
+            if x.evaluate(assignment) == False:
+                return False
+        return All_true
 
     def to_cnf(self):
         temp_list = []
@@ -144,11 +152,54 @@ class Or(Expr):
         return atom_name
 
     def evaluate(self, assignment):
-        pass
+        for x in self.hashable:
+            if x.evaluate(assignment) == True:
+                return True
+        return False
 
     def to_cnf(self):
-        pass
+        and_list = [[]]
+        to_cnf_list = []
+        final_list =[]
+        # first set all items of the overall Or(x1,x2,x3,....) to cnf, create a new list out of them, put  in and list
+        # CASE 1: if x is an atom or Not,
+        for x in self.hashable:
+            to_cnf_list.append(x.to_cnf())
+        # to_cnf_list contains each original element of Or(x1,x2,x3,....), but in cnf
 
+        # CASE 1: if x is an atom or Not,
+        for x in to_cnf_list:
+            if isinstance(x, Atom) or isinstance(x, Not):
+                and_list.append([x])
+        # Case 2: if x is an Or statement,
+        for x in to_cnf_list:
+            if isinstance(x, Or):
+                for z in x.hashable:
+                    and_list.append(z)
+        # Case 3 if x is an And statement
+        for x in to_cnf_list:
+            if isinstance(x, And):
+                print "X is:" + repr(x)
+                # list to add to final and list after dealing with this specific and
+                total_list = []
+                for z in x.hashable:
+                    print "Z is:" + repr(z)
+                    temp_and = and_list[:]
+                    for y in temp_and:
+                        temp = y[:]
+                        temp.append(z)
+                        total_list.append(temp)
+                        print total_list
+                and_list = total_list
+        return_list = []
+        for or_group in and_list:
+            print or_group
+            if len(or_group) > 1:
+                return_list.append(Or(*or_group))
+            elif len(or_group) == 1:
+                return_list.append(or_group[0])
+        print return_list
+        return And(*return_list)
 
 class Implies(Expr):
     def __init__(self, left, right):
@@ -168,7 +219,10 @@ class Implies(Expr):
         return self.left.atom_names().union(self.right.atom_names())
 
     def evaluate(self, assignment):
-        pass
+        if Not(self.left).evaluate(assignment) == True or self.right.evaluate == True:
+            return True
+        else:
+            return False
 
     def to_cnf(self):
         return Or(Not(self.left), self.right).to_cnf()
@@ -189,28 +243,65 @@ class Iff(Expr):
 
     def atom_names(self):
         return self.left.atom_names().union(self.right.atom_names())
+
     def evaluate(self, assignment):
-        pass
+        if Or(Not(self.left), self.right).evaluate(assignment) is True and Or(Not(self.right), self.left).evaluate(assignment) is True:
+            return True
+        else:
+            return False
+
     def to_cnf(self):
             return And(Or(Not(self.left), self.right), Or(Not(self.right), self.left)).to_cnf()
 
 def satisfying_assignments(expr):
-    pass
+    num_Atoms = len(expr.atom_names())
+
+    true_false = [0 for x in range(num_Atoms)]
+    print true_false
+    dictionary = {y: False for y in expr.atom_names()}
+    nums_to_variables = [atom for atom in expr.atom_names()]
+    for i in range(0, 2**num_Atoms):
+        print "I: " + str(i)
+        for x in range(0, len(true_false)):
+            print "X: " + str(x)
+            if (i >> x) & 1 == 1:
+                true_false[x] = 1
+            else:
+                true_false[x] = 0
+        for x in range(0, len(nums_to_variables)):
+            if true_false[x] == 1:
+                dictionary[nums_to_variables[x]] = True
+            else:
+                dictionary[nums_to_variables[x]] = False
+        print dictionary
+        if expr.evaluate(dictionary):
+            dict2 = copy.deepcopy(dictionary)
+            yield dict2
 
 class KnowledgeBase(object):
     def __init__(self):
-        pass
+        self.fact_set = set()
+
     def get_facts(self):
-        pass
+        return self.fact_set
+
     def tell(self, expr):
-        pass
+        cnf = expr.to_cnf()
+        self.fact_set.add(cnf)
+
     def ask(self, expr):
         pass
 
 
-a, b, c = map(Atom, "abc")
-print And(a, And(b, c)).to_cnf()
+a, b, c, d, e = map(Atom, "abcde")
+print Or(And(a, b), And(c, d), e).to_cnf()
+print ""
+print list(satisfying_assignments(Iff(Iff(Atom("a"), Atom("b")), Atom("c"))))
 
+kb = KnowledgeBase()
+kb.tell(a)
+kb.tell(And(a, b))
+print kb.get_facts()
 
 ############################################################
 # Section 2: Logic Puzzles
